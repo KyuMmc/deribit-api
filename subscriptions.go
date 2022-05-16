@@ -1,10 +1,11 @@
 package deribit
 
 import (
-	"github.com/frankrap/deribit-api/models"
-	"github.com/json-iterator/go"
 	"log"
 	"strings"
+
+	"github.com/frankrap/deribit-api/models"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func (c *Client) subscriptionsProcess(event *Event) {
@@ -115,6 +116,14 @@ func (c *Client) subscriptionsProcess(event *Event) {
 			return
 		}
 		c.Emit(event.Channel, &notification)
+	} else if strings.HasPrefix(event.Channel, "incremental_ticker") {
+		var orderBookResponse models.GetOrderBookResponse
+		err := jsoniter.Unmarshal(event.Data, &orderBookResponse)
+		if err != nil {
+			log.Printf("%v", err)
+			return
+		}
+		c.Emit(event.Channel, &orderBookResponse)
 	} else if strings.HasPrefix(event.Channel, "user.changes") {
 		var notification models.UserChangesNotification
 		err := jsoniter.Unmarshal(event.Data, &notification)
